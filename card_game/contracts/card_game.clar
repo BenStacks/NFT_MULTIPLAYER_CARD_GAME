@@ -66,7 +66,6 @@
   )
 )
 
-
 (define-private (get-player-if-exists (result (list 200 {player-address: principal, player-name: (string-ascii 256), player-mana: uint, player-health: uint, in-battle: bool})) (index uint))
   (match (map-get? players index)
     player (unwrap! (as-max-len? (append result player) u200) result)
@@ -74,16 +73,10 @@
   )
 )
 
-;; Read-only Functions
+;; Player  check and getter functions
 (define-read-only (is-player (address principal))
   (is-some (map-get? player-info address))
 )
-
-;; Read-only Functions
-(define-read-only (is-player-token (address principal))
-  (is-some (map-get? player-token-info address))
-)
-
 
 (define-read-only (get-player (address principal))
   (match (map-get? player-info address)
@@ -92,11 +85,102 @@
   )
 )
 
+
+;; Player token check and  getter functions
+(define-read-only (is-player-token (address principal))
+  (is-some (map-get? player-token-info address))
+)
+
+
 (define-read-only (get-player-token (address principal))
   (match (map-get? player-token-info address)
     player-token-index (ok (unwrap! (map-get? game-tokens player-token-index) (err u404)))
     (err u404)
   )
 )
+
+
+;; Battle getter functions
+(define-read-only (is-battle (name (string-ascii 256)))
+  (is-some (map-get? battle-info name))
+)
+
+(define-read-only (get-battle (name (string-ascii 256)))
+  (match (map-get? battle-info name)
+    battle-index (ok (unwrap! (map-get? battles battle-index) (err u404)))
+    (err u404)
+  )
+)
+
+;; updating a battle
+(define-private (update-battle (name (string-ascii 256)) (new-battle {
+    battle-status: uint,
+    battle-hash: (buff 32),
+    name: (string-ascii 256),
+    players: (list 2 principal),
+    moves: (list 2 uint),
+    winner: (optional principal)
+  }))
+  (match (map-get? battle-info name)
+    battle-index (begin
+      (map-set battles battle-index new-battle)
+      (ok true))
+    (err u404)
+  )
+)
+
+
+
+(define-private (get-battle-if-exists 
+  (result (list 200 {
+    battle-status: uint,
+    battle-hash: (buff 32),
+    name: (string-ascii 256),
+    players: (list 2 principal),
+    moves: (list 2 uint),
+    winner: (optional principal)
+  })) 
+  (index uint))
+  (match (map-get? battles index)
+    battle (unwrap! (as-max-len? (append result battle) u200) result)
+    result
+  )
+)
+
+
+
+
+
+;; ;; ... (previous functions remain the same)
+
+;; (define-private (generate-sequence-helper (start uint) (end uint))
+;;   (if (>= start end)
+;;     (list)
+;;     (unwrap-panic (as-max-len? (append (list u1) (generate-sequence-helper (+ start u1) end)) u200))))
+
+;; ;; ... (rest of the functions remain the same)
+
+;;     ;; Helper function for get-all-battles (assuming it's not defined elsewhere)
+;; (define-private (generate-sequence (start uint) (end uint))
+;;   (if (> start end)
+;;     (list)
+;;     (let ((sequence (unwrap! (as-max-len? (list start) u200) (list))))
+;;       (fold generate-sequence-iter
+;;             sequence
+;;             (generate-sequence-helper start end)))))
+
+;; (define-private (generate-sequence-iter (acc (list 200 uint)) (ignored uint))
+;;   (let ((last (unwrap! (element-at acc (- (len acc) u1)) acc))
+;;         (next (+ last u1)))
+;;     (if (> next (var-get battles-count))
+;;       acc
+;;       (unwrap-panic (as-max-len? (append acc next) u200)))))
+
+
+;;       (define-read-only (get-all-battles)
+;;   (let ((battle-count (var-get battles-count)))
+;;     (fold get-battle-if-exists
+;;           (list)
+;;           (generate-sequence u1 battle-count))))
 
 
