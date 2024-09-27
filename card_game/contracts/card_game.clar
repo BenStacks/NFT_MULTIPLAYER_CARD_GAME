@@ -11,7 +11,6 @@
 (define-data-var base-uri (string-ascii 256) "")
 (define-data-var total-supply uint u0)
 
-;; Enums (represented as constants in Clarity)
 (define-constant BATTLE_STATUS_PENDING u0)
 (define-constant BATTLE_STATUS_STARTED u1)
 (define-constant BATTLE_STATUS_ENDED u2)
@@ -129,58 +128,70 @@
   )
 )
 
+;; Function to get all players
+(define-read-only (get-all-players)
+  (let ((player-count (var-get players-count)))
+    (fold get-player-fold (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9) (list ))
+  )
+)
 
+;; Fold function to accumulate players
+(define-private (get-player-fold (index uint) (acc (list 10 {
+    player-address: principal,
+    player-name: (string-ascii 256),
+    player-mana: uint,
+    player-health: uint,
+    in-battle: bool
+  })))
+  (match (map-get? players index)
+    player (unwrap-panic (as-max-len? (append acc player) u10))
+    acc
+  )
+)
 
-(define-private (get-battle-if-exists 
-  (result (list 200 {
+;; Function to get all battles
+(define-read-only (get-all-battles)
+  (let ((battle-count (var-get battles-count)))
+    (fold get-battle-fold (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9) (list ))
+  )
+)
+
+;; Fold function to accumulate battles
+(define-private (get-battle-fold (index uint) (acc (list 10 {
     battle-status: uint,
     battle-hash: (buff 32),
     name: (string-ascii 256),
     players: (list 2 principal),
     moves: (list 2 uint),
     winner: (optional principal)
-  })) 
-  (index uint))
+  })))
   (match (map-get? battles index)
-    battle (unwrap! (as-max-len? (append result battle) u200) result)
-    result
+    battle (unwrap-panic (as-max-len? (append acc battle) u10))
+    acc
+  )
+)
+
+;; Function to get all player tokens
+(define-read-only (get-all-player-tokens)
+  (let ((token-count (var-get game-tokens-count)))
+    (fold get-token-fold (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9) (list ))
+  )
+)
+
+;; Fold function to accumulate player tokens
+(define-private (get-token-fold (index uint) (acc (list 10 {
+    name: (string-ascii 256),
+    id: uint,
+    attack-strength: uint,
+    defense-strength: uint
+  })))
+  (match (map-get? game-tokens index)
+    token (unwrap-panic (as-max-len? (append acc token) u10))
+    acc
   )
 )
 
 
 
-
-
-;; ;; ... (previous functions remain the same)
-
-;; (define-private (generate-sequence-helper (start uint) (end uint))
-;;   (if (>= start end)
-;;     (list)
-;;     (unwrap-panic (as-max-len? (append (list u1) (generate-sequence-helper (+ start u1) end)) u200))))
-
-;; ;; ... (rest of the functions remain the same)
-
-;;     ;; Helper function for get-all-battles (assuming it's not defined elsewhere)
-;; (define-private (generate-sequence (start uint) (end uint))
-;;   (if (> start end)
-;;     (list)
-;;     (let ((sequence (unwrap! (as-max-len? (list start) u200) (list))))
-;;       (fold generate-sequence-iter
-;;             sequence
-;;             (generate-sequence-helper start end)))))
-
-;; (define-private (generate-sequence-iter (acc (list 200 uint)) (ignored uint))
-;;   (let ((last (unwrap! (element-at acc (- (len acc) u1)) acc))
-;;         (next (+ last u1)))
-;;     (if (> next (var-get battles-count))
-;;       acc
-;;       (unwrap-panic (as-max-len? (append acc next) u200)))))
-
-
-;;       (define-read-only (get-all-battles)
-;;   (let ((battle-count (var-get battles-count)))
-;;     (fold get-battle-if-exists
-;;           (list)
-;;           (generate-sequence u1 battle-count))))
 
 
