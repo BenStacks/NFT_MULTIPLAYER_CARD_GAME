@@ -72,6 +72,8 @@
   )
 )
 
+
+
 ;; Player  check and getter functions
 (define-read-only (is-player (address principal))
   (is-some (map-get? player-info address))
@@ -192,9 +194,44 @@
   )
 )
 
+;; Add player function
+(define-public (add-player 
+  (player-address principal) 
+  (player-name (string-ascii 256)) 
+  (player-mana uint) 
+  (player-health uint))
+  (begin
+  
+    (if (is-some (map-get? player-info player-address))
 
+      ;; If player exists, return an error
+      (err u400) 
 
+      ;; Else proceed to add the player
+      (let 
+        (
+          ;; Get the current player count (this will be the index of the new player)
+          (new-player-index (var-get players-count))
+        )
+        ;; Update the `players` map with new player details
+        (map-set players new-player-index 
+          {
+            player-address: player-address,
+            player-name: player-name,
+            player-mana: player-mana,
+            player-health: player-health,
+            in-battle: false 
+          }
+        )
+        ;; Update the `player-info` map to link player address to player index (just the index)
+        (map-set player-info player-address new-player-index)
+        
+        (var-set players-count (+ new-player-index u1))
 
-
+        (ok true)
+      )
+    )
+  )
+)
 
 
