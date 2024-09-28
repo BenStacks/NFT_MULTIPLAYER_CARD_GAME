@@ -112,7 +112,7 @@
 )
 
 ;; updating a battle
-(define-private (update-battle (name (string-ascii 256)) (new-battle {
+(define-public (update-battle (name (string-ascii 256)) (new-battle {
     battle-status: uint,
     battle-hash: (buff 32),
     name: (string-ascii 256),
