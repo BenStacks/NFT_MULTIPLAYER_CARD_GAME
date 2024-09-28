@@ -268,4 +268,36 @@
   )
 )
 
+(define-public (mint-token (player principal) (token-name (string-ascii 256)) (attack-strength uint) (defense-strength uint))
+  (begin
+    (if (is-some (map-get? player-info player))
+      (let (
+            ;; Retrieve the current game tokens count to generate a unique token ID
+            (new-token-index (var-get game-tokens-count))
+
+            (new-token {
+              name: token-name,
+              id: new-token-index,
+              attack-strength: attack-strength,
+              defense-strength: defense-strength
+            })
+          )
+          
+        ;; Insert the new token into the game tokens map
+        (map-set game-tokens new-token-index new-token)
+
+        ;; Increment the game tokens count for future tokens
+        (var-set game-tokens-count (+ new-token-index u1))
+
+        ;; Associate the newly minted token with the player
+        (map-set player-token-info player new-token-index)
+
+        (ok new-token-index)
+      )
+      (err u404)
+    )
+  )
+)
+
+
 
