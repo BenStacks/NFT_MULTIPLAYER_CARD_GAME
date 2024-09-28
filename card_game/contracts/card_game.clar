@@ -128,6 +128,27 @@
   )
 )
 
+;; Function to get all players
+(define-read-only (get-all-players)
+  (let ((player-count (var-get players-count)))
+    (fold get-player-fold (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9) (list ))
+  )
+)
+
+;; Fold function to accumulate players
+(define-private (get-player-fold (index uint) (acc (list 10 {
+    player-address: principal,
+    player-name: (string-ascii 256),
+    player-mana: uint,
+    player-health: uint,
+    in-battle: bool
+  })))
+  (match (map-get? players index)
+    player (unwrap-panic (as-max-len? (append acc player) u10))
+    acc
+  )
+)
+
 
 
 
