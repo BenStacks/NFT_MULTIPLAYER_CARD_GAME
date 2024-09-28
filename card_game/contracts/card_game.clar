@@ -128,68 +128,7 @@
   )
 )
 
-;; Function to get all players
-(define-read-only (get-all-players)
-  (let ((player-count (var-get players-count)))
-    (fold get-player-fold (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9) (list ))
-  )
-)
 
-;; Fold function to accumulate players
-(define-private (get-player-fold (index uint) (acc (list 10 {
-    player-address: principal,
-    player-name: (string-ascii 256),
-    player-mana: uint,
-    player-health: uint,
-    in-battle: bool
-  })))
-  (match (map-get? players index)
-    player (unwrap-panic (as-max-len? (append acc player) u10))
-    acc
-  )
-)
-
-;; Function to get all battles
-(define-read-only (get-all-battles)
-  (let ((battle-count (var-get battles-count)))
-    (fold get-battle-fold (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9) (list ))
-  )
-)
-
-;; Fold function to accumulate battles
-(define-private (get-battle-fold (index uint) (acc (list 10 {
-    battle-status: uint,
-    battle-hash: (buff 32),
-    name: (string-ascii 256),
-    players: (list 2 principal),
-    moves: (list 2 uint),
-    winner: (optional principal)
-  })))
-  (match (map-get? battles index)
-    battle (unwrap-panic (as-max-len? (append acc battle) u10))
-    acc
-  )
-)
-
-;; Function to get all player tokens
-(define-read-only (get-all-player-tokens)
-  (let ((token-count (var-get game-tokens-count)))
-    (fold get-token-fold (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9) (list ))
-  )
-)
-
-;; Fold function to accumulate player tokens
-(define-private (get-token-fold (index uint) (acc (list 10 {
-    name: (string-ascii 256),
-    id: uint,
-    attack-strength: uint,
-    defense-strength: uint
-  })))
-  (match (map-get? game-tokens index)
-    token (unwrap-panic (as-max-len? (append acc token) u10))
-    acc
-  )
-)
 
 
 
