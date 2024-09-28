@@ -234,4 +234,38 @@
   )
 )
 
+(define-public (create-battle (battle-name (string-ascii 256)) (player1 principal) (player2 principal))
+  (begin
+    ;; Check if both players exist in the player-info map
+    (if (and (is-some (map-get? player-info player1)) (is-some (map-get? player-info player2)))
+      (let (
+            ;; Retrieve the current battle count for the new battle index
+            (new-battle-index (var-get battles-count))
+            (battle-hash (keccak256 (len battle-name)))
+
+
+            ;; Define the initial battle structure
+            (new-battle {
+              battle-status: BATTLE_STATUS_PENDING,
+              battle-hash: battle-hash,
+              name: battle-name,
+              players: (list player1 player2),
+              moves: (list u0 u0), ;; No moves have been made yet
+              winner: none
+            })
+          )
+
+        (map-set battles new-battle-index new-battle)
+
+        ;; Store the battle info (maps the battle name to the battle index)
+        (map-set battle-info battle-name new-battle-index)
+
+        (var-set battles-count (+ new-battle-index u1))
+        (ok new-battle-index)
+      )
+      (err u404)
+    )
+  )
+)
+
 
