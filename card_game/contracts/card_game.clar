@@ -149,6 +149,28 @@
   )
 )
 
+;; Function to get all battles
+(define-read-only (get-all-battles)
+  (let ((battle-count (var-get battles-count)))
+    (fold get-battle-fold (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9) (list ))
+  )
+)
+
+;; Fold function to accumulate battles
+(define-private (get-battle-fold (index uint) (acc (list 10 {
+    battle-status: uint,
+    battle-hash: (buff 32),
+    name: (string-ascii 256),
+    players: (list 2 principal),
+    moves: (list 2 uint),
+    winner: (optional principal)
+  })))
+  (match (map-get? battles index)
+    battle (unwrap-panic (as-max-len? (append acc battle) u10))
+    acc
+  )
+)
+
 
 
 
