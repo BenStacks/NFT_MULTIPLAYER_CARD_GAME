@@ -15,10 +15,6 @@
 (define-constant BATTLE_STATUS_STARTED u1)
 (define-constant BATTLE_STATUS_ENDED u2)
 
-(define-constant ERR-NOT-AUTHORIZED (err u403))
-(define-constant ERR-NOT-FOUND (err u404))
-(define-constant ERR-ALREADY-EXISTS (err u409))
-
 ;; Data Maps and Variables
 (define-map player-info principal uint)
 (define-map player-token-info principal uint)
@@ -303,56 +299,58 @@
   )
 )
 
-(define-public (attack-or-defend (choice uint) (battle-name (string-ascii 256)))
-  (let
-    (
-      (battle (unwrap! (get-battle battle-name) ERR-NOT-FOUND))
-      (player-index (if (is-eq tx-sender (element-at (get players battle) u0)) u0 u1))
-    )
-    (asserts! (and (>= choice u1) (<= choice u2)) ERR-NOT-AUTHORIZED)
-    (asserts! (is-eq (get battle-status battle) BATTLE-STATUS-STARTED) ERR-NOT-AUTHORIZED)
-    (asserts! (is-eq (element-at (get moves battle) player-index) u0) ERR-NOT-AUTHORIZED)
-    (let
-      (
-        (updated-moves (unwrap! (as-max-len? 
-          (replace-at? (get moves battle) player-index choice) u2) ERR-NOT-AUTHORIZED))
-        (updated-battle (merge battle { moves: updated-moves }))
-      )
-      (map-set battles (unwrap! (map-get? battle-info battle-name) ERR-NOT-FOUND) updated-battle)
-      (if (and (> (element-at updated-moves u0) u0) (> (element-at updated-moves u1) u0))
-        (resolve-battle battle-name)
-        (ok true)
-      )
-    )
+
+;; Function to start a battle
+(define-public (start-battle (battle-name (string-ascii 256)))
+  (match (get-battle battle-name)
+    success-result (update-battle battle-name (merge (unwrap-panic success-result) { battle-status: BATTLE_STATUS_STARTED }))
+    error-result (err error-result)
   )
 )
 
-
-(define-public (join-battle (name (string-ascii 256)))
-  (let
-    (
-      (battle (unwrap! (get-battle name) ERR-NOT-FOUND))
-      (player (unwrap! (get-player tx-sender) ERR-NOT-FOUND))
-    )
-    (asserts! (is-eq (get battle-status battle) BATTLE_STATUS_PENDING) ERR-NOT-AUTHORIZED)
-    (asserts! (not (is-eq (get player1 (get players battle)) tx-sender)) ERR-NOT-AUTHORIZED)
-    (asserts! (not (get in-battle player)) ERR-NOT-AUTHORIZED)
-    (let
-      (
-        (updated-battle (merge battle {
-          battle-status: BATTLE-STATUS-STARTED,
-          players: (list (get player1 (get players battle)) tx-sender)
-        }))
-      )
-      (map-set battles (unwrap! (map-get? battle-info name) ERR-NOT-FOUND) updated-battle)
-      (map-set players (unwrap! (map-get? player-info (get player1 (get players battle))) ERR-NOT-FOUND) 
-        (merge (unwrap! (get-player (get player1 (get players battle))) ERR-NOT-FOUND) { in-battle: true })
-      )
-      (map-set players (unwrap! (map-get? player-info tx-sender) ERR-NOT-FOUND) 
-        (merge player { in-battle: true })
-      )
-      (ok true)
-    )
+;; Function to end a battle and declare a winner
+(define-public (end-battle (battle-name (string-ascii 256)) (winner principal))
+  (match (get-battle battle-name)
+    success-result (update-battle battle-name (merge (unwrap-panic success-result) { battle-status: BATTLE_STATUS_ENDED, winner: (some winner) }))
+    error-result (err error-result)
   )
 )
 
+;; Function to make a move in a battle
+(define-public (make-move (battle-name (string-ascii 256)) (player principal) (move uint))
+  (match (get-battle battle-name)
+    success-result 
+    (let 
+      ((battle (unwrap-panic success-result))
+       (current-moves (get moves battle))
+       (player-index (index-of (get players battle) player)))
+      (match player-index
+        some-index (update-battle battle-name (merge battle { moves: (replace-at? current-moves (unwrap-panic some-index) move) }))
+        none (err u404)
+      )
+    )
+    error-result (err error-result)
+  )
+)
+
+;; Function to get a player's current health
+(define-read-only (get-player-health (player principal))
+  (match (get-player player)
+    success-result (ok (get player-health (unwrap-panic success-result)))
+    error-result (err error-result)
+  )
+)
+
+;; Function to update a player's mana
+(define-public (update-player-mana (player principal) (new-mana uint))
+  (match (get-player player)
+    success-result 
+    (let 
+      ((player-data (unwrap-panic success-result))
+       (updated-player (merge player-data { player-mana: new-mana }))
+       (player-index (unwrap-panic (map-get? player-info player))))
+      (ok (map-set players player-index updated-player))
+    )
+    error-result (err error-result)
+  )
+)
