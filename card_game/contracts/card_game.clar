@@ -327,5 +327,40 @@
 (define-data-var battles-count uint u0)
 
 ;; Define NFT
-(define-non-fungible-token avax-gods-nft uint)
+(define-non-fungible-token card-gods uint)
+
+;; Data Maps
+(define-map player-info principal uint)
+(define-map player-token-info principal uint)
+(define-map battle-info (string-ascii 256) uint)
+
+(define-map players uint 
+  {
+    player-address: principal,
+    player-name: (string-ascii 256),
+    player-mana: uint,
+    player-health: uint,
+    in-battle: bool
+  }
+)
+
+(define-map game-tokens uint 
+  {
+    name: (string-ascii 256),
+    id: uint,
+    attack-strength: uint,
+    defense-strength: uint
+  }
+)
+
+(define-map battles uint 
+  {
+    battle-status: uint,
+    battle-hash: (buff 32),
+    name: (string-ascii 256),
+    players: (list 2 principal),
+    moves: (list 2 uint),
+    winner: (optional principal)
+  }
+)
 
