@@ -325,7 +325,7 @@
        (current-moves (get moves battle))
        (player-index (index-of (get players battle) player)))
       (match player-index
-        some-index (update-battle battle-name (merge battle { moves: (replace-at? current-moves (unwrap-panic some-index) move) }))
+        some-index (update-battle battle-name (merge battle { moves: (element-at  index? current-moves (unwrap-panic some-index) move) }))
         none (err u404)
       )
     )
