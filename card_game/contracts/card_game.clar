@@ -300,4 +300,57 @@
 )
 
 
+;; Function to start a battle
+(define-public (start-battle (battle-name (string-ascii 256)))
+  (match (get-battle battle-name)
+    success-result (update-battle battle-name (merge (unwrap-panic success-result) { battle-status: BATTLE_STATUS_STARTED }))
+    error-result (err error-result)
+  )
+)
 
+;; Function to end a battle and declare a winner
+(define-public (end-battle (battle-name (string-ascii 256)) (winner principal))
+  (match (get-battle battle-name)
+    success-result (update-battle battle-name (merge (unwrap-panic success-result) { battle-status: BATTLE_STATUS_ENDED, winner: (some winner) }))
+    error-result (err error-result)
+  )
+)
+
+;; Function to make a move in a battle
+(define-public (make-move (battle-name (string-ascii 256)) (player principal) (move uint))
+  (match (get-battle battle-name)
+    success-result 
+    (let 
+      ((battle (unwrap-panic success-result))
+       (current-moves (get moves battle))
+       (player-index (index-of (get players battle) player)))
+      (match player-index
+        some-index (update-battle battle-name (merge battle { moves: (element-at  index? current-moves (unwrap-panic some-index) move) }))
+        none (err u404)
+      )
+    )
+    error-result (err error-result)
+  )
+)
+
+;; Function to get a player's current health
+(define-read-only (get-player-health (player principal))
+  (match (get-player player)
+    success-result (ok (get player-health (unwrap-panic success-result)))
+    error-result (err error-result)
+  )
+)
+
+;; Function to update a player's mana
+(define-public (update-player-mana (player principal) (new-mana uint))
+  (match (get-player player)
+    success-result 
+    (let 
+      ((player-data (unwrap-panic success-result))
+       (updated-player (merge player-data { player-mana: new-mana }))
+       (player-index (unwrap-panic (map-get? player-info player))))
+      (ok (map-set players player-index updated-player))
+    )
+    error-result (err error-result)
+  )
+)
